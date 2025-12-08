@@ -9,13 +9,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# Page Guard Pattern
-if "logged_in" not in st.session_state or not st.session_state.logged_in:
-    st.error("You must be logged in to view this page")
-    if st.button("Go to login"):
+from app.auth import initialize_session_state
+
+# Initialize session
+initialize_session_state()
+
+# Authentication check
+if not st.session_state.logged_in:
+    st.error("🚫 You must be logged in to view this page")
+    if st.button("Go to Login"):
         st.switch_page("Home.py")
     st.stop()
-
 # Title
 st.title("🖥️ IT Operations Dashboard")
 

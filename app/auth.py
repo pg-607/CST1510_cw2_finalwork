@@ -1,172 +1,158 @@
+
 import bcrypt
-import os
-USER_DATA_FILE = "users.txt"
-def hash_password(plain_text_password):
-   
-    # TODO: Encode the password to bytes (bcrypt requires byte strings)
-    password_bytes = plain_text_password.encode('utf-8')
+import sqlite3
+from pathlib import Path
+import streamlit as st
+
+# Database path
+DB_PATH = Path("DATA") / "intelligence_platform.db"
+
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.session_state.role = ""  # CHANGED from "user_role" to "role"
+    st.session_state.user_id = None
+    st.success("Logged out successfully!")
+
+def validate_password(password):
+    """
+    Validate password strength.
     
-    # TODO: Generate a salt using bcrypt.gensalt()
+    Args:
+        password: Password to validate
+        
+    Returns:
+        tuple: (is_valid: bool, error_message: str)
+    """
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+    
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+    
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one number"
+    
+    return True, "Password is valid"
+
+def hash_password(password):
+    """Hash password using bcrypt."""
     salt = bcrypt.gensalt()
-    
-    # TODO: Hash the password using bcrypt.hashpw()
-    hashed_password = bcrypt.hashpw(password_bytes, salt)
-    
-    # TODO: Decode the hash back to a string to store in a text file
-    
-    return hashed_password.decode('utf-8')
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
-def verify_password(plain_text_password, hashed_password):
-    
-    # TODO: Encode both the plaintext password and the stored hash to byt
-    password_bytes = plain_text_password.encode('utf-8')
-    hashed_password_bytes = hashed_password.encode('utf-8')
-    
-    # TODO: Use bcrypt.checkpw() to verify the password
-    return bcrypt.checkpw(password_bytes, hashed_password_bytes)
+def verify_password(password, hashed_password):
+    """Verify password against hash."""
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except:
+        return False
 
- # TEMPORARY TEST CODE - Remove after testing
-test_password = "SecurePassword123"
-# Test hashing
-hashed = hash_password(test_password)
-print(f"Original password: {test_password}")
-print(f"Hashed password: {hashed}")
-print(f"Hash length: {len(hashed)} characters")
-
-# Test verification with correct password
-is_valid = verify_password(test_password, hashed)
-print(f"\nVerification with correct password: {is_valid}")
-# Test verification with incorrect password
-is_invalid = verify_password("WrongPassword", hashed)
-print(f"Verification with incorrect password: {is_invalid}")
-
-
-def register_user(username, password):
-   
-    # TODO: Check if the username already exists  
-    # TODO: Hash the password
-    # TODO: Append the new user to the file
-    # Format: username,hashed_password
-
-    hashed_password = hash_password(password)
-    with open(USER_DATA_FILE, 'a') as f:
-        f.write(f"{username},{hashed_password}\n")
-        print(f"User {username} registered.")
-    return True
+def get_db_connection():
+    """Get database connection."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def user_exists(username):
- # TODO: Handle the case where the file doesn't exist yet
- # TODO: Read the file and check each line for the username
-    with open(USER_DATA_FILE, 'r') as f:
-        for line in f:
-            stored_username, _ = line.strip().split(',', 1)
-            if stored_username == username:
-                return True
-    return False
+    """Check if username exists in database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return exists
 
-def login_user(username, password):
-     # TODO: Handle the case where no users are registered yet
- # TODO: Search for the username in the file
- # TODO: If username matches, verify the password
- # TODO: If we reach here, the username was not found
-    if user_exists(username) == False:
-        print("Username not found.")
-        return False
-    with open(USER_DATA_FILE, 'r') as f:
-        for line in f:
-            stored_username, stored_hashed_password = line.strip().split(',', 1)
-            if stored_username == username:
-                if verify_password(password, stored_hashed_password):
-                    print(f"User {username} logged in.")
-                    return True
-                else:
-                    print("Incorrect password.")
-                    return False
-                
-def validate_username(username):
-     #Returns: tuple: (bool, str) - (is_valid, error_message)
-     #check if username already exists
-    if user_exists(username):
-        return (False, "Username already exists.")
+def register_user(username, password, role="user"):
+    """
+    Register a new user in database.
+    
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    # Basic validation
+    if not username or not password:
+        return False, "Username and password are required"
+    
     if len(username) < 3:
-        return (False, "Username must be at least 3 characters long.")
-    return (True, "is valid")
+        return False, "Username must be at least 3 characters"
     
-def validate_password(password):    
-    if len(password) < 8:
-        return (False, "Password must be at least 8 characters long.")
-    return (True, "is valid")
-
-def display_menu():
-    """Displays the main menu options."""
-    print("\n" + "="*50)
-    print("  MULTI-DOMAIN INTELLIGENCE PLATFORM")
-    print("  Secure Authentication System")
-    print("="*50)
-    print("\n[1] Register a new user")
-    print("[2] Login")
-    print("[3] Exit")
-    print("-"*50)
-
-def main():
-    """Main program loop."""
-    print("\nWelcome to the Week 7 Authentication System!")
+    # Validate password
+    is_valid, error_msg = validate_password(password)
+    if not is_valid:
+        return False, error_msg
     
-    while True:
-        display_menu()
-        choice = input("\nPlease select an option (1-3): ").strip()
+    # Check if user exists
+    if user_exists(username):
+        return False, "Username already exists"
+    
+    try:
+        # Hash password
+        password_hash = hash_password(password)
         
-        if choice == '1':
-            # Registration flow
-            print("\n--- USER REGISTRATION ---")
-            username = input("Enter a username: ").strip()
-            
-            # Validate username
-            is_valid, error_msg = validate_username(username)
-            if not is_valid:
-                print(f"Error: {error_msg}")
-                continue
-            
-            password = input("Enter a password: ").strip()
+        # Insert into database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username, password_hash, role)
+        )
+        conn.commit()
+        conn.close()
+        
+        return True, f"User '{username}' registered successfully"
+    except Exception as e:
+        return False, f"Registration failed: {str(e)}"
 
-            
-            # Validate password
-            is_valid, error_msg = validate_password(password)
-            if not is_valid:
-                print(f"Error: {error_msg}")
-                continue
-            
-            # Confirm password
-            password_confirm = input("Confirm password: ").strip()
-            if password != password_confirm:
-                print("Error: Passwords do not match.")
-                continue
-            
-            # Register the user
-            register_user(username, password)
+def authenticate_user(username, password):
+    """
+    Authenticate user against database.
+    
+    Returns:
+        tuple: (success: bool, user_data: dict or None, message: str)
+    """
+    if not username or not password:
+        return False, None, "Username and password are required"
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, username, password_hash, role FROM users WHERE username = ?",
+            (username,)
+        )
+        user_row = cursor.fetchone()
+        conn.close()
         
-        elif choice == '2':
-            # Login flow
-            print("\n--- USER LOGIN ---")
-            username = input("Enter your username: ").strip()
-            password = input("Enter your password: ").strip()
-            
-            # Attempt login
-            if login_user(username, password):
-                print("\nYou are now logged in.")
-                print("(In a real application, you would now access the dashboard)")
-                
-                # Optional: Ask if they want to logout or exit
-                input("\nPress Enter to return to main menu...")
+        if not user_row:
+            return False, None, "User not found"
         
-        elif choice == '3':
-            # Exit
-            print("\nThank you for using the authentication system.")
-            print("Exiting...")
-            break
-        
+        if verify_password(password, user_row['password_hash']):
+            user_data = {
+                'id': user_row['id'],
+                'username': user_row['username'],
+                'role': user_row['role']  # This returns 'role' from database
+            }
+            return True, user_data, "Login successful"
         else:
-            print("\nError: Invalid option. Please select 1, 2, or 3.")
-if __name__ == "__main__":
-    main()
-
+            return False, None, "Incorrect password"
+    except Exception as e:
+        return False, None, f"Authentication error: {str(e)}"
+    
+def initialize_session_state():
+   
+    # Initialize authentication variables if they don't exist
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+    
+    if "role" not in st.session_state:  # CHANGED from "user_role" to "role"
+        st.session_state.role = ""
+    
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = None
