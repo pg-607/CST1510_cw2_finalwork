@@ -6,7 +6,17 @@ st.set_page_config(
     layout="wide"
 )
 
-from app.auth import initialize_session_state
+# Initialize session state (local helper — other pages define this same helper)
+def initialize_session_state():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+    if "role" not in st.session_state:
+        st.session_state.role = ""
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = None
+
 
 # Initialize session
 initialize_session_state()

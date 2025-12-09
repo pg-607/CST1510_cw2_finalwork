@@ -6,7 +6,17 @@ st.set_page_config(
     layout="wide"
 )
 
-from app.auth import initialize_session_state
+# Initialize session state (defined locally to match other pages)
+def initialize_session_state():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+    if "role" not in st.session_state:
+        st.session_state.role = ""
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = None
+
 
 # Initialize session
 initialize_session_state()
@@ -53,39 +63,10 @@ st.header("Platform Settings")
 theme = st.selectbox("Theme", ["Light", "Dark", "System"])
 layout = st.selectbox("Layout", ["Wide", "Centered"])
 
-# Notification preferences
-st.subheader("Notifications")
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    email_notifications = st.checkbox("Email Notifications", value=True)
-
-with col2:
-    security_alerts = st.checkbox("Security Alerts", value=True)
-
-with col3:
-    weekly_digest = st.checkbox("Weekly Digest", value=False)
 
 # Save settings button
 if st.button("Save Settings", type="primary"):
     st.success("Settings saved successfully!")
-
-# Danger zone
-st.header("Danger Zone")
-with st.expander("Advanced Options"):
-    st.warning("⚠️ These actions are irreversible")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Clear All Data", type="secondary"):
-            if "incidents" in st.session_state:
-                st.session_state.incidents = []
-            st.success("Data cleared!")
-    
-    with col2:
-        if st.button("Reset to Defaults", type="secondary"):
-            st.info("Settings reset to defaults")
 
 # Session information
 st.header("Session Information")

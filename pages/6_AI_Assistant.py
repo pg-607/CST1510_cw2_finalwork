@@ -9,17 +9,15 @@ st.set_page_config(
     layout="wide"
 )
 
-from app.auth import initialize_session_state
-
-# Initialize session
-initialize_session_state()
-
-# Authentication check
-if not st.session_state.logged_in:
-    st.error("🚫 You must be logged in to view this page")
-    if st.button("Go to Login"):
-        st.switch_page("Home.py")
-    st.stop()
+def initialize_session_state():
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+    if "role" not in st.session_state:
+        st.session_state.role = ""
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = None
 # Initialize OpenAI client
 try:
     # Try environment variable first, then Streamlit secrets, then .env file
@@ -89,7 +87,7 @@ with st.sidebar:
         help="Higher values make output more random"
     )
     
-    # Clear chat (Page 24)
+    # Clear chat 
     if st.button("Clear Chat", use_container_width=True):
         st.session_state.messages = [
             {"role": "system", "content": system_prompt}
@@ -100,7 +98,7 @@ with st.sidebar:
     user_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
     st.metric("Messages", user_messages)
 
-# Display chat history (Page 18)
+# Display chat history
 for message in st.session_state.messages:
     if message["role"] != "system":  # Don't show system prompt (Page 20)
         with st.chat_message(message["role"]):

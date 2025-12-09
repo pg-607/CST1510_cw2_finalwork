@@ -1,5 +1,30 @@
+"""
+Refactored Home.py - Login and Registration using OOP
+"""
 import streamlit as st
-from app.auth import authenticate_user, register_user, initialize_session_state
+from pathlib import Path
+
+# Import OOP services
+from services.database_manager import DatabaseManager
+from services.auth_manager import AuthManager
+
+# Database path
+DB_PATH = Path("DATA") / "intelligence_platform.db"
+
+# Initialize session state
+def initialize_session_state():
+    """Initialize session state variables."""
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    
+    if "username" not in st.session_state:
+        st.session_state.username = ""
+    
+    if "role" not in st.session_state:
+        st.session_state.role = ""
+    
+    if "user_id" not in st.session_state:
+        st.session_state.user_id = None
 
 # Initialize session
 initialize_session_state()
@@ -10,6 +35,10 @@ st.set_page_config(
     page_icon="🔐",
     layout="centered"
 )
+
+# Initialize services (using OOP)
+db = DatabaseManager(str(DB_PATH))
+auth_manager = AuthManager(db)
 
 # Page header
 st.title("🔐 Multi-Domain Intelligence Platform")
@@ -29,12 +58,16 @@ with tab_login:
         if not login_username or not login_password:
             st.error("❌ Please enter both username and password")
         else:
-            success, user_data, message = authenticate_user(login_username, login_password)
-            if success:
+            # Use AuthManager to login (returns User object or None)
+            user = auth_manager.login_user(login_username, login_password)
+            
+            if user:
+                # Store user information in session state
                 st.session_state.logged_in = True
-                st.session_state.username = user_data['username']
-                st.session_state.role = user_data['role']  # CHANGED from "user_role" to "role"
-                st.session_state.user_id = user_data['id']
+                st.session_state.username = user.get_username()
+                st.session_state.role = user.get_role()
+                st.session_state.user_id = user.get_id()
+                
                 st.success(f"✅ Welcome back, {login_username}!")
                 
                 # Add a small delay for better UX
@@ -43,7 +76,7 @@ with tab_login:
                     time.sleep(1)
                     st.switch_page("pages/1_Dashboard.py")
             else:
-                st.error(f"❌ {message}")
+                st.error("❌ Invalid username or password")
                 
 with tab_register:
     st.header("Create New Account")
@@ -72,12 +105,14 @@ with tab_register:
         elif new_password != confirm_password:
             st.error("❌ Passwords do not match")
         else:
-            # Register user
-            success, message = register_user(new_username, new_password, user_role)
+            # Use AuthManager to register user
+            success, message = auth_manager.register_user(new_username, new_password, user_role)
+            
             if success:
                 st.success(f"✅ {message}")
                 st.info("📋 Go to Login tab to sign in")
             else:
                 st.error(f"❌ {message}")
 
-
+# Close database connection when done
+db.close()
