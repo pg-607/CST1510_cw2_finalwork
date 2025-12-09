@@ -1,4 +1,4 @@
-# Week 11: OOP refactir
+# Week 11: OOP refactor
 
 Student Name: [Piyush Goel]  
 Student ID: M010902646  
