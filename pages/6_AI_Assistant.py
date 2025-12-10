@@ -1,14 +1,14 @@
 import streamlit as st
 import os
 from openai import OpenAI
-
+from dotenv import load_dotenv
 # Page configuration 
 st.set_page_config(
     page_title="AI Assistant",
     page_icon="🤖",
     layout="wide"
 )
-
+load_dotenv()  # Load .env file
 def initialize_session_state():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
