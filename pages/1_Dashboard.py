@@ -1,4 +1,13 @@
 import streamlit as st
+import pandas as pd
+from pathlib import Path
+
+# Import OOP services
+from services.database_manager import DatabaseManager
+from services.incident_service import IncidentService
+
+# Database path
+DB_PATH = Path("DATA") / "intelligence_platform.db"
 
 # Page configuration
 st.set_page_config(
@@ -27,6 +36,10 @@ if not st.session_state.logged_in:
     if st.button("Go to Login"):
         st.switch_page("Home.py")
     st.stop()
+
+# Initialize services (OOP)
+db = DatabaseManager(str(DB_PATH))
+incident_service = IncidentService(db)
 
 # Dashboard content (only shown if logged in)
 st.title("Dashboard")
@@ -67,18 +80,33 @@ with col3:
 
 st.header("Incident Trends")
 
-# Sample data for chart
-import pandas as pd
-import numpy as np
+# Get actual incident data from database
+incidents = incident_service.get_all_incidents()
 
-# Create sample data
-data = pd.DataFrame(
-    np.random.randn(20, 3),
-    columns=['Malware', 'Phishing', 'DDoS']
-)
-
-# Line chart 
-st.line_chart(data)
+if incidents:
+    # Parse timestamps and count incidents by date
+    dates = []
+    for inc in incidents:
+        try:
+            timestamp = pd.to_datetime(inc.get_timestamp())
+            dates.append(timestamp.date())
+        except Exception:
+            continue
+    
+    if dates:
+        # Create a time series of incident counts by date
+        ts = pd.Series(dates).value_counts().sort_index()
+        df_incidents = ts.rename_axis('date').reset_index(name='count')
+        df_incidents['date'] = pd.to_datetime(df_incidents['date'])
+        
+        # Display the line chart
+        st.line_chart(df_incidents.set_index('date'))
+        
+        st.info(f"Showing incident activity from the last {len(df_incidents)} days")
+    else:
+        st.info("No incident data available for chart")
+else:
+    st.info("No incidents recorded yet")
 
 # Sidebar with logout
 with st.sidebar:
@@ -99,3 +127,6 @@ with st.sidebar:
 st.markdown("---")
 if st.button(f"Ask  AI Assistant", use_container_width=True):
     st.switch_page("pages/6_AI_Assistant.py")
+
+# Close database connection when done
+db.close()
