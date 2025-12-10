@@ -82,7 +82,7 @@ chart_type = st.selectbox(
         "Severity Breakdown (Pie)"
     ]
 )
-
+# Render selected chart
 if chart_type == "Threat Distribution (Bar)":
     if category_counts:
         threat_data = pd.DataFrame({
@@ -105,10 +105,10 @@ elif chart_type == "Incident Trend (Line)":
                 continue
 
         if dates:
-            ts = pd.Series(dates).value_counts().sort_index()
-            df_ts = ts.rename_axis('date').reset_index(name='count')
-            df_ts['date'] = pd.to_datetime(df_ts['date'])
-            st.line_chart(df_ts.set_index('date'))
+            ts = pd.Series(dates).value_counts().sort_index() # Time series of counts
+            df_ts = ts.rename_axis('date').reset_index(name='count') # DataFrame for charting
+            df_ts['date'] = pd.to_datetime(df_ts['date']) # Ensure datetime format
+            st.line_chart(df_ts.set_index('date')) # Display line chart
         else:
             st.info("No timestamped incidents available for trend")
     else:
@@ -116,11 +116,11 @@ elif chart_type == "Incident Trend (Line)":
 
 else:  # Severity Breakdown (Pie)
     if incidents:
-        severity_counts = {}
+        severity_counts = {} # Count by severity
         for inc in incidents:
             sev = inc.get_severity() or "Unknown"
-            severity_counts[sev] = severity_counts.get(sev, 0) + 1
-
+            severity_counts[sev] = severity_counts.get(sev, 0) + 1 # Tally counts using OOP method
+        # Render pie chart
         if severity_counts:
             df_sev = pd.DataFrame({
                 'Severity': list(severity_counts.keys()),

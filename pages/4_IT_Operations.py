@@ -67,7 +67,7 @@ with col3:
 # Ticket statistics
 st.header("Ticket Statistics")
 col1, col2, col3, col4 = st.columns(4)
-
+# Display stats using object methods
 with col1:
     open_count = stats['by_status'].get('Open', 0)
     st.metric("Open", open_count)
@@ -250,7 +250,7 @@ if tickets:
 st.subheader("Filter Tickets")
 
 col1, col2 = st.columns(2)
-
+# Filter using object methods
 with col1:
     status_filter = st.selectbox(
         "Filter by Status",

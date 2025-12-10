@@ -145,7 +145,7 @@ if datasets:
     
     # Display details using object methods
     col1, col2 = st.columns(2)
-    
+    # Show dataset details
     with col1:
         st.write("**Dataset Information:**")
         st.write(f"- **ID:** {selected_dataset.get_id()}")
@@ -182,7 +182,7 @@ with col1:
 # Data quality metrics (placeholder)
 st.header("Data Quality Metrics")
 col1, col2, col3 = st.columns(3)
-
+ # Display placeholder metrics
 with col1:
     st.metric("Completeness", "98.7%")
 

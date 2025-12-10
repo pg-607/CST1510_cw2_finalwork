@@ -43,7 +43,7 @@ domain = st.selectbox(
     index=0
 )
 
-# System prompts from Page 28
+# System prompts for different domains
 if domain == "Cybersecurity":
     system_prompt = """You are a cybersecurity expert assistant.
 Analyze incidents, threats, and provide technical guidance."""

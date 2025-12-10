@@ -47,7 +47,7 @@ st.success(f"Welcome, {st.session_state.username}!")
 
 
 st.header("Domain Overview")
-
+# Navigation buttons to other dashboards
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -64,7 +64,7 @@ with col3:
     st.subheader("IT Operations")
     if st.button("View IT Dashboard"):
         st.switch_page("pages/4_IT_Operations.py")
-
+# Security metrics (placeholder)
 st.header("Security Metrics")
 col1, col2, col3 = st.columns(3)
 
@@ -77,7 +77,7 @@ with col2:
 with col3:
     st.metric("Incidents", 3, delta="+1")
 
-
+# show recent incidents
 st.header("Incident Trends")
 
 # Get actual incident data from database
