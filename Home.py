@@ -84,7 +84,6 @@ with tab_register:
     new_username = st.text_input("Choose a username", key="register_username")
     new_password = st.text_input("Choose a password", type="password", key="register_password")
     confirm_password = st.text_input("Confirm password", type="password", key="register_confirm")
-    user_role = st.selectbox("Select role", ["user", "analyst", "admin"], key="register_role")
     
     # Password requirements display
     with st.expander("🔒 Password Requirements"):
@@ -105,8 +104,8 @@ with tab_register:
         elif new_password != confirm_password:
             st.error("❌ Passwords do not match")
         else:
-            # Use AuthManager to register user
-            success, message = auth_manager.register_user(new_username, new_password, user_role)
+            # Use AuthManager to register user (all new users are 'user' role)
+            success, message = auth_manager.register_user(new_username, new_password, "user")
             
             if success:
                 st.success(f"✅ {message}")
