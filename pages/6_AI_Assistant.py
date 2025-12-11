@@ -43,6 +43,43 @@ domain = st.selectbox(
     index=0
 )
 
+# Default prompts for each domain
+domain_prompts = {
+    "General": [
+        "How can I help you today?",
+        "What would you like to know?",
+        "Ask me anything"
+    ],
+    "Cybersecurity": [
+        "What are the latest cybersecurity threats?",
+        "How can I improve my security posture?",
+        "Analyze a recent security incident",
+        "What is a common vulnerability?"
+    ],
+    "Data Science": [
+        "How should I analyze this dataset?",
+        "What visualization would work best?",
+        "Explain this statistical concept",
+        "How do I handle missing data?"
+    ],
+    "IT Operations": [
+        "How can I optimize system performance?",
+        "What's the best practice for ticket management?",
+        "How do I troubleshoot this issue?",
+        "What's a good IT monitoring strategy?"
+    ]
+}
+
+# Show default prompts for the selected domain
+if domain in domain_prompts:
+    st.markdown("**Quick prompts:**")
+    prompt_cols = st.columns(2)
+    for idx, prompt_text in enumerate(domain_prompts[domain]):
+        with prompt_cols[idx % 2]:
+            if st.button(prompt_text, key=f"prompt_{idx}"):
+                # Auto-populate chat input with selected prompt
+                st.session_state.selected_prompt = prompt_text
+
 # System prompts for different domains
 if domain == "Cybersecurity":
     system_prompt = """You are a cybersecurity expert assistant.
@@ -106,6 +143,11 @@ for message in st.session_state.messages:
 
 # Get user input 
 prompt = st.chat_input(f"Ask about {domain.lower()}...")
+
+# Use selected prompt if button was clicked
+if "selected_prompt" in st.session_state and st.session_state.selected_prompt:
+    prompt = st.session_state.selected_prompt
+    st.session_state.selected_prompt = None  # Clear after use
 
 if prompt:
     # Display user message
